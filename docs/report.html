@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 18mm 17mm 16mm 17mm;
+    @bottom-center { content: counter(page) " / " counter(pages); font-size: 8pt; color: #90a4ae; } }
+  * { box-sizing: border-box; }
+  body { font-family: "DejaVu Sans", sans-serif; color: #1c2b36; font-size: 10.3pt; line-height: 1.5; }
+  h1 { color: #0d2538; font-size: 21pt; margin: 0 0 2pt; line-height: 1.15; }
+  .sub { color: #164e63; font-size: 11pt; font-weight: bold; margin: 0 0 2pt; }
+  .meta { color: #607d8b; font-size: 8.6pt; margin: 0 0 14pt; }
+  h2 { color: #0d2538; font-size: 13pt; margin: 18pt 0 5pt; padding-bottom: 3pt; border-bottom: 2px solid #164e63; }
+  h3 { color: #164e63; font-size: 10.8pt; margin: 12pt 0 3pt; }
+  p { margin: 0 0 7pt; text-align: justify; }
+  .lead { background: #f2f7f9; border-left: 3px solid #164e63; padding: 9pt 12pt; margin: 0 0 12pt; }
+  table { width: 100%; border-collapse: collapse; margin: 6pt 0 12pt; font-size: 9.2pt; }
+  th { background: #0d2538; color: #fff; text-align: left; padding: 5pt 8pt; font-weight: bold; }
+  td { padding: 4.5pt 8pt; border-bottom: 1px solid #e3e9ec; }
+  tr:nth-child(even) td { background: #f7fafb; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; }
+  .tot td { font-weight: bold; border-top: 2px solid #90a4ae; background: #eef4f6; }
+  figure { margin: 8pt 0 12pt; text-align: center; page-break-inside: avoid; }
+  figure img { width: 100%; max-width: 420pt; }
+  figcaption { color: #607d8b; font-size: 8.4pt; margin-top: 3pt; }
+  .tag { display: inline-block; background: #164e63; color: #fff; font-size: 7.6pt; padding: 1.5pt 6pt; border-radius: 3px; margin-right: 4pt; }
+  .foot { color: #607d8b; font-size: 8.4pt; font-style: italic; margin-top: 4pt; }
+  .pb { page-break-before: always; }
+  ul { margin: 0 0 8pt; padding-left: 16pt; }
+  li { margin-bottom: 3pt; }
+</style>
+</head>
+<body>
+
+<h1>Liquidity &amp; ALM Risk Engine</h1>
+<p class="sub">LCR, NSFR, liquidity gap and survival horizon, and IRRBB on a bank balance sheet</p>
+<p class="meta">Portfolio project &middot; Nassim (ArjiNasim) &middot; October 2026 &middot; github.com/ArjiNasim/liquidity-alm-engine</p>
+
+<div class="lead">
+<p style="margin:0">This project builds the core toolkit of a bank's Liquidity Risk and ALM function.
+From a representative balance sheet it computes the two Basel regulatory liquidity ratios (the
+Liquidity Coverage Ratio and the Net Stable Funding Ratio), a maturity-ladder liquidity gap with a
+survival horizon, and the interest-rate risk of the banking book (IRRBB) through its value and
+earnings sensitivities. All of it runs end to end and is shown in a public dashboard.</p>
+</div>
+
+<h2>1. Introduction</h2>
+<p>A bank makes money by funding long-term, illiquid assets with shorter, more liquid liabilities.
+That maturity transformation is the source of its profit and of its liquidity risk: if funding cannot
+be rolled, the bank fails even while solvent. The liquidity and ALM function measures and controls
+this risk. This engine implements its core metrics, from the balance sheet up to a deployed
+dashboard.</p>
+
+<h2>2. Context</h2>
+<p>After 2008, Basel III introduced two binding liquidity ratios. The <strong>Liquidity Coverage
+Ratio</strong> ensures a 30-day survival buffer of high-quality liquid assets; the <strong>Net Stable
+Funding Ratio</strong> ensures structural, one-year funding stability. Alongside them, supervisors
+require banks to monitor the liquidity gap across maturities and the interest-rate risk of the banking
+book (IRRBB), with a Supervisory Outlier Test on the value sensitivity. This project places all of
+these side by side, which is how an ALM/Treasury second line operates.</p>
+
+<h3>Mapping to the role</h3>
+<p>Each module answers a specific element of the offer's Liquidity Risk Analyst mission:</p>
+<table>
+<tr><th>Mission</th><th>Module</th></tr>
+<tr><td>Review regulatory liquidity metrics (LCR)</td><td>HQLA tiers, caps, 30-day net outflows</td></tr>
+<tr><td>Review regulatory liquidity metrics (NSFR)</td><td>Available vs Required Stable Funding</td></tr>
+<tr><td>Quantify &amp; control liquidity risk of ALM</td><td>maturity ladder, survival horizon</td></tr>
+<tr><td>Interest-rate risk of ALM activities</td><td>IRRBB dEVE / dNII, Basel shocks</td></tr>
+</table>
+
+<h2>3. Problem statement</h2>
+<p>The problem the project solves: <strong>given a bank's balance sheet, show whether it can survive a
+30-day stress, whether it is funded stably over a year, how long it survives on its maturity profile,
+and how its value and earnings move with rates.</strong> Those four questions are precisely the LCR,
+the NSFR, the survival horizon, and IRRBB. The sections below answer each.</p>
+
+<h2>4. What was done</h2>
+<p>A Python engine of five modules, a test suite, a reproducible notebook, and a five-view dashboard:</p>
+<ul>
+<li><span class="tag">balance_sheet</span> A representative ALM balance sheet with HQLA levels, behavioural liquidity buckets and repricing buckets.</li>
+<li><span class="tag">lcr</span> Liquidity Coverage Ratio: HQLA tiering, haircuts, Level 2 / 2B caps, 30-day stressed net outflows.</li>
+<li><span class="tag">nsfr</span> Net Stable Funding Ratio: Available vs Required Stable Funding.</li>
+<li><span class="tag">liquidity_gap</span> Maturity-ladder gap and survival horizon.</li>
+<li><span class="tag">irrbb</span> dEVE and dNII under the six Basel standardised rate shocks, with the Supervisory Outlier Test.</li>
+</ul>
+<p>The engine is covered by <strong>13 unit tests</strong> (balance-sheet integrity, HQLA caps, LCR
+stress response, NSFR factors, cumulative-gap consistency, repricing-gap reconciliation, dEVE shock
+symmetry), and the dashboard is deployed publicly on Streamlit Cloud.</p>
+
+<h2 class="pb">5. How it works</h2>
+<p>Every balance-sheet item carries three tags: its HQLA level, its behavioural liquidity bucket, and
+its rate-repricing bucket. A key ALM choice sits here: non-maturing deposits are contractually
+overnight but behaviourally sticky, so their liquidity bucket is placed on a long-dated core while
+their repricing bucket stays immediate. Conflating the two would make the liquidity gap look
+catastrophic and the rate risk understated.</p>
+<p>On this base, the LCR divides the HQLA stock, after haircuts and the Level 2 and 2B caps, by the
+30-day stressed net outflows, where outflows use the Basel run-off rates by funding type and inflows
+are capped at 75% of outflows. The NSFR divides Available Stable Funding by Required Stable Funding,
+each a weighted sum over liabilities and assets. The liquidity gap nets asset inflows against
+liability outflows per bucket, accumulates them, and adds the HQLA stock to read the survival horizon.
+Finally, IRRBB reprices the banking book under the six standardised rate shocks to get dEVE, the
+value sensitivity, and uses the one-year repricing gap for dNII, the earnings sensitivity.</p>
+
+<h2>6. Results</h2>
+
+<h3>Regulatory liquidity ratios</h3>
+<p><em>Representative balance sheet: around 170bn in assets.</em></p>
+<table>
+<tr><th>Ratio</th><th class="num">Value</th><th class="num">Minimum</th><th>Status</th></tr>
+<tr><td>Liquidity Coverage Ratio (LCR)</td><td class="num">220%</td><td class="num">100%</td><td>PASS</td></tr>
+<tr class="tot"><td>Net Stable Funding Ratio (NSFR)</td><td class="num">140%</td><td class="num">100%</td><td>PASS</td></tr>
+</table>
+<p>Both ratios clear their regulatory floor comfortably: the bank holds a 30-day buffer more than twice
+its stressed net outflows, and its funding is structurally stable over a year.</p>
+<figure><img src="chart_ratios.png"><figcaption>LCR and NSFR against the 100% regulatory minimum.</figcaption></figure>
+<figure><img src="chart_hqla.png"><figcaption>HQLA composition by Basel level, after haircuts and caps.</figcaption></figure>
+
+<h3>Liquidity gap and survival horizon</h3>
+<p>The maturity ladder shows a survival horizon of <strong>six months</strong>: the HQLA stock plus the
+cumulative gap stays positive out to the 6M bucket, after which the bank would need to roll funding.
+This is the structural maturity transformation every bank runs, quantified.</p>
+<figure><img src="chart_gap.png"><figcaption>Liquidity gap ladder: marginal gap, cumulative gap, and the HQLA-counterbalanced line.</figcaption></figure>
+
+<h3>IRRBB</h3>
+<p>The worst change in economic value of equity is <strong>-1,258M</strong> under the short-rate-up
+shock, equal to <strong>7.4% of Tier 1 capital</strong>, comfortably within the 15% Supervisory
+Outlier Test limit. On the earnings side, net interest income moves about <strong>480M</strong> for a
+100bp parallel shock. The bank is asset-sensitive in the short end: rising short rates hurt value but
+a parallel rise helps earnings, the usual tension between the value and earnings views.</p>
+<figure><img src="chart_irrbb.png"><figcaption>dEVE under the six Basel standardised rate shocks.</figcaption></figure>
+
+<h2>7. Conclusion</h2>
+<p>The project answers the four questions it set. The bank <strong>survives the 30-day stress</strong>
+(LCR 220%), is <strong>funded stably over a year</strong> (NSFR 140%), has a <strong>six-month
+survival horizon</strong> on its maturity profile, and its <strong>rate risk is within the supervisory
+limit</strong> (worst dEVE 7.4% of Tier 1). Together these are the Liquidity Risk and ALM function's
+core metrics, built end to end and reconciled on one balance sheet. The natural next steps are a
+behavioural deposit model and a dated cash-flow engine for a sharper dEVE.</p>
+<p class="foot">Code, tests and the live dashboard: github.com/ArjiNasim/liquidity-alm-engine.
+Figures are reproduced in notebooks/01_liquidity_alm.ipynb.</p>
+
+</body>
+</html>
