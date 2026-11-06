@@ -1,6 +1,6 @@
 # Liquidity & ALM Risk Engine
 
-🚀 **[Live dashboard](https://YOUR-APP.streamlit.app)** · 📄 **[Project report (PDF)](Liquidity_ALM_Project_Report.pdf)**
+🚀 **[Live dashboard](https://YOUR-APP.streamlit.app)** · 📄 **[Project report (PDF)](Credit_Portfolio_Governance_Engine_Report.pdf)**
 
 An end-to-end **liquidity and ALM risk** engine for a bank balance sheet: the two
 Basel regulatory ratios (**LCR** and **NSFR**), a maturity-ladder **liquidity gap**
